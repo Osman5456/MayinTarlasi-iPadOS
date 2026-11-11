@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0e1726">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MayinTarlasi">
+  <meta name="description" content="iPad ve iPhone icin dokunmatik Mayin Tarlasi oyunu.">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <title>MayinTarlasi</title>
+  <style>
+    :root { color-scheme: dark; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; --base: #0e1726; --card: #17253a; --text: #f5f8ff; --muted: #b4c0d3; --accent: #68d5c5; --open: #f7fafc; --closed: #7d98b8; }
+    * { box-sizing: border-box; }
+    html { background: var(--base); }
+    body { margin: 0; min-height: 100vh; min-height: 100dvh; background: radial-gradient(ellipse at 50% 0, #233653 0, #111b2b 45%, #0e1726 100%); color: var(--text); padding: max(16px, env(safe-area-inset-top)) 12px max(20px, env(safe-area-inset-bottom)); }
+    .app { width: min(100%, 600px); margin: auto; }
+    .head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 4px 4px 17px; }
+    .head h1 { font-size: clamp(24px, 4.8vw, 35px); letter-spacing: -.035em; margin: 0; line-height: 1.1; }
+    .eyebrow { color: var(--accent); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .15em; margin: 0 0 5px; }
+    .new-btn, .mode, .switch { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .new-btn { flex: none; background: var(--accent); color: #0c2430; border: 0; border-radius: 14px; font-weight: 850; font-size: 14px; padding: 13px 15px; min-height: 46px; box-shadow: 0 4px 20px #54c9bb2e; }
+    .new-btn:active { transform: translateY(1px); }
+    .panel { background: #17263be6; border: 1px solid #ffffff20; padding: 13px; border-radius: 23px; box-shadow: 0 20px 65px #0003; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+    .stat { border-radius: 13px; background: #0f1c2d; border: 1px solid #ffffff12; padding: 9px 3px; text-align: center; }
+    .stat-label { display: block; font-weight: 650; color: #b6c3d6; text-transform: uppercase; font-size: 10px; letter-spacing: .065em; margin-bottom: 4px; }
+    .stat-value { color: white; display: block; font-size: clamp(21px, 4.5vw, 29px); font-weight: 850; font-variant-numeric: tabular-nums; line-height: 1.05; }
+    .controls { display: flex; gap: 9px; align-items: stretch; margin-bottom: 12px; }
+    .mode { flex: 1; border: 1px solid #59718f; border-radius: 13px; background: #263a54; color: #e1e9f6; padding: 12px 7px; min-height: 46px; font-size: 14px; font-weight: 800; }
+    .mode[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #102a31; box-shadow: inset 0 0 0 1px #0a3a4c14; }
+    .board-frame { background: #061222; border: 1px solid #ffffff18; padding: 7px; border-radius: 17px; }
+    .board { width: 100%; display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: clamp(2px, .55vw, 4px); user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
+    .tile { aspect-ratio: 1; width: 100%; padding: 0; appearance: none; -webkit-appearance: none; display: flex; justify-content: center; align-items: center; border: 0; border-radius: clamp(5px, 1vw, 9px); font-weight: 850; font-size: clamp(16px, 4.5vw, 28px); line-height: 1; font-variant-numeric: tabular-nums; font-family: inherit; box-shadow: inset 0 -3px 0 #0003; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .tile.covered { background: #839bb7; color: #213248; }
+    .tile.covered:active { background: #b2c7de; transform: scale(.96); }
+    .tile.open { background: var(--open); color: #111c28; box-shadow: inset 0 0 0 1px #bdc9d9; cursor: default; }
+    .tile.hint { background: #839bb7; box-shadow: inset 0 -3px 0 #0003; }
+    .tile.flag { background: #fee48c; color: #c63b34; }
+    .tile.mine { background: #ffb2a4; color: #14253a; }
+    .tile.boom { background: #f45151; color: white; animation: pulse .36s ease-out; }
+    .tile.wrong { background: #ffd4d1; color: #d51e28; }
+    .tile.n0 { color: #313c4a; }
+    .tile.n1 { color: #1663dd; }
+    .tile.n2 { color: #12854e; }
+    .tile.n3 { color: #de3f31; }
+    .tile.n4 { color: #6d46c9; }
+    .tile.n5 { color: #a44728; }
+    .tile.n6 { color: #0a8792; }
+    .tile.n7 { color: #263449; }
+    .tile.n8 { color: #677788; }
+    .tile.hint:not(.open) { filter: saturate(.6); }
+    @keyframes pulse { from { transform: scale(1.1); } to { transform: scale(1); } }
+    .bottom { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 13px; }
+    .switch { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #ebf4ff; font-weight: 700; }
+    .switch input { appearance: none; position: relative; margin: 0; width: 39px; height: 24px; border-radius: 15px; background: #445571; border: 1px solid #8190aa; transition: background .17s; }
+    .switch input:checked { background: #42bdb3; border-color: #42bdb3; }
+    .switch input::before { content: ""; position: absolute; width: 18px; height: 18px; top: 2px; left: 2px; border-radius: 50%; background: #fff; transition: transform .17s; }
+    .switch input:checked::before { transform: translateX(15px); }
+    .status { color: #d4e2f2; margin: 13px 3px 4px; min-height: 20px; font-size: 14px; font-weight: 650; text-align: center; }
+    .status.win { color: #81e8bf; }
+    .status.lose { color: #ffb5ac; }
+    .help { color: #9aabc2; text-align: center; font-size: 12px; margin: 8px auto 0; max-width: 500px; line-height: 1.6; }
+    button:focus-visible, input:focus-visible { outline: 3px solid #ffffff; outline-offset: 3px; }
+    @media (max-width: 380px) { .panel { padding: 9px; border-radius: 18px; } .board-frame { padding: 4px; } .tile { font-size: clamp(16px, 5vw, 21px); } .head h1 { font-size: 25px; } .new-btn { padding: 11px; } }
+    @media (prefers-reduced-motion: reduce) { .tile.boom { animation: none; } }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="head">
+      <div><p class="eyebrow">Dokunmatik oyun</p><h1>💣 Mayın Tarlası</h1></div>
+      <button class="new-btn" id="restart" type="button">↻ Yeni Oyun</button>
+    </header>
+    <section class="panel" aria-label="Mayın Tarlası">
+      <div class="stats" aria-label="Oyun bilgileri">
+        <div class="stat"><span class="stat-label">Kalan mayın</span><span class="stat-value" id="minesLeft">10</span></div>
+        <div class="stat"><span class="stat-label">Açılan</span><span class="stat-value" id="revealed">0/71</span></div>
+        <div class="stat"><span class="stat-label">Süre</span><span class="stat-value" id="clock">0:00</span></div>
+      </div>
+      <div class="controls" role="group" aria-label="Dokunma modu">
+        <button id="openMode" type="button" class="mode" aria-pressed="true">👆 Kutu aç</button>
+        <button id="flagMode" type="button" class="mode" aria-pressed="false">🚩 Bayrak koy</button>
+      </div>
+      <div class="board-frame"><div class="board" id="board" aria-label="9 satır 9 sütun oyun alanı"></div></div>
+      <div class="bottom">
+        <label class="switch"><input type="checkbox" id="learning" aria-label="Öğrenme modu"><span>Öğrenme modu</span></label>
+        <span style="color:#a9bad0;font-size:12px">9 × 9 · 10 mayın</span>
+      </div>
+      <p class="status" id="status" role="status" aria-live="polite">Başlamak için bir kutuya dokun.</p>
+    </section>
+    <p class="help">Dokun: kutuyu aç · Bayrak modu: mayın işaretle · Uzun bas: bayrak koy/kaldır<br> Açık kutulardaki <strong>0</strong>, etrafında mayın olmadığını gösterir.</p>
+  </main>
+  <script>
+    'use strict';
+    (() => {
+      const SIZE = 9, MINE_COUNT = 10, SAFE_COUNT = SIZE * SIZE - MINE_COUNT;
+      const $ = id => document.getElementById(id);
+      const boardEl = $('board'), minesEl = $('minesLeft'), countEl = $('revealed');
+      const clockEl = $('clock'), statusEl = $('status'), learningEl = $('learning');
+      const openModeEl = $('openMode'), flagModeEl = $('flagMode');
+      const neighbors = index => {
+        const r = Math.floor(index / SIZE), c = index % SIZE, arr = [];
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            if (!dr && !dc) continue;
+            const nr = r + dr, nc = c + dc;
+            if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) arr.push(nr * SIZE + nc);
+          }
+        }
+        return arr;
+      };
+      let mines, opened, flags, counts, started, ended, won, hitAt, mode, timeStart, elapsed, ticker;
+      let longPressTimer = null, suppressTap = false, suppressReset = null;
+      function setStatus(message, kind = '') {
+        statusEl.textContent = message;
+        statusEl.className = 'status' + (kind ? ' ' + kind : '');
+      }
+      function formatTime(sec) { return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`; }
+      function refreshCounters() {
+        minesEl.textContent = String(MINE_COUNT - flags.size);
+        countEl.textContent = `${opened.size}/${SAFE_COUNT}`;
+        clockEl.textContent = formatTime(elapsed);
+      }
+      function tick() { if (started && !ended) { elapsed = Math.floor((Date.now() - timeStart) / 1000); refreshCounters(); } }
+      function stopClock() { if (ticker !== null) { clearInterval(ticker); ticker = null; } tick(); }
+      function placeMines(safeIndex) {
+        // First tap and all surrounding cells are safe.
+        const excluded = new Set([safeIndex, ...neighbors(safeIndex)]);
+        const candidates = [];
+        for (let i = 0; i < SIZE * SIZE; i++) if (!excluded.has(i)) candidates.push(i);
+        for (let i = candidates.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+        }
+        mines = new Set(candidates.slice(0, MINE_COUNT));
+        counts = Array.from({ length: SIZE * SIZE }, (_, i) => neighbors(i).filter(n => mines.has(n)).length);
+        started = true;
+        timeStart = Date.now();
+        ticker = setInterval(tick, 1000);
+      }
+      function revealArea(startIndex) {
+        const queue = [startIndex];
+        let cursor = 0;
+        while (cursor < queue.length) {
+          const i = queue[cursor++];
+          if (opened.has(i) || flags.has(i) || mines.has(i)) continue;
+          opened.add(i);
+          if (counts[i] === 0) {
+            for (const n of neighbors(i)) if (!opened.has(n) && !flags.has(n) && !mines.has(n)) queue.push(n);
+          }
+        }
+      }
+      function finishGame(isWin, explodedIndex = null) {
+        // Keep the elapsed time frozen and show the result.
+        tick();
+        ended = true;
+        won = isWin;
+        hitAt = explodedIndex;
+        if (ticker !== null) { clearInterval(ticker); ticker = null; }
+        if (isWin) setStatus(`🎉 Tebrikler! 71 güvenli kutuyu açtın. Süre: ${formatTime(elapsed)}`, 'win');
+        else setStatus('💥 Mayına bastın! Yeni Oyun ile tekrar dene.', 'lose');
+      }
+      function openCell(i) {
+        if (ended || opened.has(i) || flags.has(i)) return;
+        if (!started) placeMines(i);
+        if (mines.has(i)) { finishGame(false, i); render(); return; }
+        revealArea(i);
+        if (opened.size === SAFE_COUNT) finishGame(true);
+        else setStatus('Gri kutuları açmaya devam et.');
+        render();
+      }
+      function toggleFlag(i) {
+        if (ended || opened.has(i)) return;
+        if (flags.has(i)) flags.delete(i);
+        else if (flags.size < MINE_COUNT) flags.add(i);
+        else { setStatus('10 bayrağın tamamını kullandın.'); return; }
+        render();
+      }
+      function setMode(next) {
+        mode = next;
+        openModeEl.setAttribute('aria-pressed', String(next === 'open'));
+        flagModeEl.setAttribute('aria-pressed', String(next === 'flag'));
+      }
+      function render() {
+        const fragment = document.createDocumentFragment();
+        for (let i = 0; i < SIZE * SIZE; i++) {
+          const tile = document.createElement('button');
+          tile.type = 'button';
+          tile.className = 'tile';
+          tile.dataset.index = String(i);
+          const row = Math.floor(i / SIZE) + 1, col = (i % SIZE) + 1;
+          let label = 'kapalı';
+          if (hitAt === i) { tile.classList.add('boom'); tile.textContent = '💥'; label = 'patlayan mayın'; }
+          else if (ended && mines.has(i)) { tile.classList.add(won ? 'flag' : 'mine'); tile.textContent = won ? '🚩' : '💣'; label = 'mayın'; }
+          else if (ended && flags.has(i) && !mines.has(i)) { tile.classList.add('wrong'); tile.textContent = '✕'; label = 'yanlış bayrak'; }
+          else if (opened.has(i)) { tile.classList.add('open', `n${counts[i]}`); tile.textContent = String(counts[i]); label = `${counts[i]} mayın komşusu, açık`; }
+          else if (flags.has(i)) { tile.classList.add('flag'); tile.textContent = '🚩'; label = 'bayraklı'; }
+          else if (started && (learningEl.checked || ended) && !mines.has(i)) {
+            tile.classList.add('hint', `n${counts[i]}`);
+            tile.textContent = String(counts[i]); label = `${counts[i]} mayın komşusu, kapalı (ipucu)`;
+          } else tile.classList.add('covered');
+          tile.setAttribute('aria-label', `${row}. satır, ${col}. sütun: ${label}`);
+          fragment.appendChild(tile);
+        }
+        boardEl.replaceChildren(fragment);
+        refreshCounters();
+      }
+      function newGame() {
+        if (ticker !== null) clearInterval(ticker);
+        ticker = null;
+        mines = new Set(); opened = new Set(); flags = new Set();
+        counts = Array(SIZE * SIZE).fill(0);
+        started = false; ended = false; won = false; hitAt = null;
+        timeStart = 0; elapsed = 0;
+        cancelLongPress(); setMode('open');
+        setStatus('Başlamak için bir kutuya dokun.');
+        render();
+      }
+      function cancelLongPress() {
+        if (longPressTimer !== null) clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+      boardEl.addEventListener('click', e => {
+        const cell = e.target.closest('button[data-index]');
+        if (!cell) return;
+        if (suppressTap) { suppressTap = false; return; }
+        const i = Number(cell.dataset.index);
+        if (mode === 'flag') toggleFlag(i); else openCell(i);
+      });
+      boardEl.addEventListener('contextmenu', e => {
+        const cell = e.target.closest('button[data-index]');
+        if (!cell) return;
+        e.preventDefault(); cancelLongPress(); suppressTap = true;
+        clearTimeout(suppressReset);
+        suppressReset = setTimeout(() => { suppressTap = false; }, 450);
+        toggleFlag(Number(cell.dataset.index));
+      });
+      boardEl.addEventListener('pointerdown', e => {
+        if (e.pointerType !== 'touch' && e.pointerType !== 'pen') return;
+        const cell = e.target.closest('button[data-index]');
+        if (!cell) return;
+        cancelLongPress();
+        const i = Number(cell.dataset.index);
+        longPressTimer = setTimeout(() => {
+          longPressTimer = null;
+          suppressTap = true;
+          clearTimeout(suppressReset);
+          suppressReset = setTimeout(() => { suppressTap = false; }, 550);
+          toggleFlag(i);
+        }, 520);
+      });
+      for (const eventName of ['pointerup', 'pointercancel', 'pointerleave', 'scroll']) {
+        boardEl.addEventListener(eventName, cancelLongPress);
+      }
+      $('restart').addEventListener('click', newGame);
+      openModeEl.addEventListener('click', () => setMode('open'));
+      flagModeEl.addEventListener('click', () => setMode('flag'));
+      learningEl.addEventListener('change', render);
+      newGame();
+      if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+        window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(() => {}); });
+      }
+    })();
+  </script>
+</body>
+</html>
